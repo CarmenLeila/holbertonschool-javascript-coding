@@ -1,24 +1,22 @@
-const fs = require('fs');
+import fs from 'fs';
 
-function readDatabase(path) {
+function readDatabase(filePath) {
   return new Promise((resolve, reject) => {
-    fs.readFile(path, 'utf8', (error, data) => {
+    fs.readFile(filePath, 'utf-8', (error, data) => {
       if (error) {
-        reject(error('Cannot load the DB'));
+        reject(new Error('Cannot load the database'));
         return;
       }
-      const lines = data.split('\n');
-      const students = lines.slice(1).filter((line) => line.length > 0);
-      const fields = {};
-      for (const student of students) {
-        const field = student.split(',')[3];
-        const firstName = student.split(',')[0];
-        if (!fields[field]) {
-          fields[field] = [];
-        }
-        fields[field].push(firstName);
-      }
-      resolve(fields);
+      const groupedByField = data
+        .split('\n')
+        .filter(Boolean)
+        .slice(1)
+        .reduce((accumulator, line) => {
+          const [firstname, , , field] = line.split(',');
+          accumulator[field] = [...(accumulator[field] || []), firstname];
+          return accumulator;
+        }, {});
+      resolve(groupedByField);
     });
   });
 }
